@@ -17,16 +17,19 @@ import (
 	envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	ratelimit_config_v3 "github.com/envoyproxy/go-control-plane/envoy/config/ratelimit/v3"
 	envoy_route_v3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	admission_control_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/admission_control/v3"
 	envoy_config_filter_http_local_ratelimit_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/local_ratelimit/v3"
 	ratelimit_filter_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ratelimit/v3"
 	http "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	envoy_type_v3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
+	envoy_types_v3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/projectcontour/contour/internal/dag"
 	"github.com/projectcontour/contour/internal/envoy"
 	"github.com/projectcontour/contour/internal/protobuf"
 	"github.com/projectcontour/contour/internal/timeout"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -164,4 +167,65 @@ func enableXRateLimitHeaders(enable bool) ratelimit_filter_v3.RateLimit_XRateLim
 		return ratelimit_filter_v3.RateLimit_DRAFT_VERSION_03
 	}
 	return ratelimit_filter_v3.RateLimit_OFF
+}
+
+func AdmissionControlFilter(config *dag.RateLimitPolicy) *http.HttpFilter {
+	if config == nil {
+		return nil
+	}
+	if config.Admission == nil {
+		return nil
+	}
+
+	return &http.HttpFilter{
+		//envoy.filters.http.ratelimit
+		//Name: wellknown.HTTPRateLimit,
+		Name: "envoy.filters.http.admissionControl",
+		ConfigType: &http.HttpFilter_TypedConfig{
+			TypedConfig: protobuf.MustMarshalAny(&admission_control_v3.AdmissionControl{
+				Enabled: &envoy_core_v3.RuntimeFeatureFlag{
+					DefaultValue: &wrapperspb.BoolValue{Value: true},
+					RuntimeKey:   "admission_control.enabled",
+				},
+				EvaluationCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria_{
+					SuccessCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria{
+						HttpCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria_HttpCriteria{
+							HttpSuccessStatus: []*envoy_types_v3.Int32Range{
+								&envoy_types_v3.Int32Range{
+									Start: 100,
+									End:   400,
+								},
+								&envoy_types_v3.Int32Range{
+									Start: 404,
+									End:   404,
+								},
+							},
+						},
+						GrpcCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria_GrpcCriteria{
+							GrpcSuccessStatus: []uint32{0, 1}},
+					},
+				},
+				SamplingWindow: &durationpb.Duration{
+					Seconds: int64(config.Admission.SamplingWindow),
+					Nanos:   0,
+				},
+				Aggression: &envoy_core_v3.RuntimeDouble{
+					DefaultValue: float64(config.Admission.Aggression),
+					RuntimeKey:   "admission_control.aggression",
+				},
+				SrThreshold: &envoy_core_v3.RuntimePercent{
+					DefaultValue: &envoy_types_v3.Percent{Value: float64(config.Admission.SuccessThreshold)},
+					RuntimeKey:   "admission_control.sr_threshol",
+				},
+				RpsThreshold: &envoy_core_v3.RuntimeUInt32{
+					DefaultValue: 95,
+					RuntimeKey:   "admission_control.rps_threshold",
+				},
+				MaxRejectionProbability: &envoy_core_v3.RuntimePercent{
+					DefaultValue: &envoy_types_v3.Percent{Value: 99.0},
+					RuntimeKey:   "admission_control.max_rejection_probability",
+				},
+			}),
+		},
+	}
 }

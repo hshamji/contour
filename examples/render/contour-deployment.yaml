@@ -2764,6 +2764,32 @@ spec:
                     rateLimitPolicy:
                       description: The policy for rate limiting on the route.
                       properties:
+                        admission:
+                          description: AdmissionControlPolicy defines AC params
+                          properties:
+                            aggression:
+                              description: Aggression is the parameter that controls
+                                the shape of the throttling response
+                              format: int32
+                              minimum: 0
+                              type: integer
+                            samplingwindow:
+                              description: SamplingWindow is an integer number of
+                                seconds to sample
+                              format: int32
+                              type: integer
+                            successthreshold:
+                              description: SuccessThreshold is a percent (0-100) of
+                                the threshold below which to active throttling
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                          required:
+                          - aggression
+                          - samplingwindow
+                          - successthreshold
+                          type: object
                         global:
                           description: Global defines global rate limiting parameters,
                             i.e. parameters defining descriptors that are sent to
@@ -3840,6 +3866,32 @@ spec:
                   rateLimitPolicy:
                     description: The policy for rate limiting on the virtual host.
                     properties:
+                      admission:
+                        description: AdmissionControlPolicy defines AC params
+                        properties:
+                          aggression:
+                            description: Aggression is the parameter that controls
+                              the shape of the throttling response
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          samplingwindow:
+                            description: SamplingWindow is an integer number of seconds
+                              to sample
+                            format: int32
+                            type: integer
+                          successthreshold:
+                            description: SuccessThreshold is a percent (0-100) of
+                              the threshold below which to active throttling
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        required:
+                        - aggression
+                        - samplingwindow
+                        - successthreshold
+                        type: object
                       global:
                         description: Global defines global rate limiting parameters,
                           i.e. parameters defining descriptors that are sent to an

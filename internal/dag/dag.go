@@ -338,6 +338,7 @@ type CookieRewritePolicy struct {
 type RateLimitPolicy struct {
 	Local  *LocalRateLimitPolicy
 	Global *GlobalRateLimitPolicy
+	Admission *AdmissionControlPolicy
 }
 
 // LocalRateLimitPolicy holds local rate limiting parameters.
@@ -347,6 +348,12 @@ type LocalRateLimitPolicy struct {
 	FillInterval         time.Duration
 	ResponseStatusCode   uint32
 	ResponseHeadersToAdd map[string]string
+}
+
+type AdmissionControlPolicy struct {
+	SamplingWindow uint32
+	SuccessThreshold uint32
+	Aggression uint32
 }
 
 // HeaderHashOptions contains options for hashing a HTTP header.

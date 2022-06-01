@@ -14,7 +14,19 @@
 package v3
 
 import (
+	"fmt"
+	//envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	//envoy_types_v3 "github.com/envoyproxy/go-control-plane/envoy/type/v3"
+	//"google.golang.org/protobuf/types/known/durationpb"
+	//"google.golang.org/protobuf/types/known/wrapperspb"
 	"path"
+
+	//ratelimit_config_v3 "github.com/envoyproxy/go-control-plane/envoy/config/ratelimit/v3"
+	//ratelimit_filter_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ratelimit/v3"
+	//admission_control_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/admission_control/v3"
+	//"github.com/projectcontour/contour/internal/envoy"
+	log "github.com/sirupsen/logrus"
+	//"path"
 	"sort"
 	"sync"
 
@@ -276,6 +288,8 @@ type ListenerCache struct {
 
 	Config ListenerConfig
 	contour.Cond
+
+	// logrus.FieldLogger
 }
 
 // NewListenerCache returns an instance of a ListenerCache
@@ -356,6 +370,7 @@ func (c *ListenerCache) Query(names []string) []proto.Message {
 func (*ListenerCache) TypeURL() string { return resource.ListenerType }
 
 func (c *ListenerCache) OnChange(root *dag.DAG) {
+	//admission_control :=
 	cfg := c.Config.defaultListeners()
 	listeners := c.Config.secureListeners()
 
@@ -366,12 +381,41 @@ func (c *ListenerCache) OnChange(root *dag.DAG) {
 		return b
 	}
 
+	// Print out listener values and seen virtual hosts
+	// for _, listener := range root.Listeners {
+	// 	for _, vh := range listener.VirtualHosts {
+	// 		c.WithField("Listener-VHost:", listener.Name + "::" + vh.Name)
+	// c.WithField("ListenerDump", fmt.Sprintf("%#v", listener))
+	// 	}
+	// }
+
+	// c.WithField("Can you see this" ,"TEST")
+	dummyRLConfig := RateLimitConfig{
+		ExtensionService:        types.NamespacedName{Name: "ratelimit", Namespace: "projectcontour"},
+		Domain:                  "somedomain.com",
+		Timeout:                 timeout.Setting{},
+		FailOpen:                false,
+		EnableXRateLimitHeaders: false,
+	}
+
+	log.Info(fmt.Sprintf("This is a test of timeout.Setting: %#v", dummyRLConfig.Timeout))
+
+	// GlobalRateLimitFilter returns a configured HTTP global rate limit filter,
+	// or nil if config is nil.
+
+
+
+		//log.Info(fmt.Sprintf("This admission proto: %#v", admissionControlFilter))
 	// need to iterate through Listeners here because we only
 	// want the vhosts that have been attached to a listener
 	// by the listener processor.
 	for _, listener := range root.Listeners {
 		if len(listener.VirtualHosts) > 0 {
 			if httpListener, ok := cfg.HTTPListeners[listener.Name]; ok {
+				log.Info(fmt.Sprintf("xdsListener|392: %s", listener.Name))
+				for _, vho := range listener.VirtualHosts {
+					log.Info(fmt.Sprintf("xdsListener|394:Listener's VHosts: %s", vho.Name))
+				}
 				// Add a listener if there are vhosts bound to http.
 				cm := envoy_v3.HTTPConnectionManagerBuilder().
 					Codec(envoy_v3.CodecForVersions(cfg.DefaultHTTPVersions...)).
@@ -441,6 +485,7 @@ func (c *ListenerCache) OnChange(root *dag.DAG) {
 					MergeSlashes(cfg.MergeSlashes).
 					NumTrustedHops(cfg.XffNumTrustedHops).
 					AddFilter(envoy_v3.GlobalRateLimitFilter(envoyGlobalRateLimitConfig(cfg.RateLimitConfig))).
+					AddFilter(envoy_v3.AdmissionControlFilter(vh.RateLimitPolicy)).
 					Get()
 
 				filters = envoy_v3.Filters(cm)
@@ -506,6 +551,7 @@ func (c *ListenerCache) OnChange(root *dag.DAG) {
 					MergeSlashes(cfg.MergeSlashes).
 					NumTrustedHops(cfg.XffNumTrustedHops).
 					AddFilter(envoy_v3.GlobalRateLimitFilter(envoyGlobalRateLimitConfig(cfg.RateLimitConfig))).
+					AddFilter(envoy_v3.AdmissionControlFilter(vh.RateLimitPolicy)).
 					Get()
 
 				// Default filter chain

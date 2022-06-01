@@ -494,6 +494,10 @@ type RateLimitPolicy struct {
 	// service (RLS) for a rate limit decision on each request.
 	// +optional
 	Global *GlobalRateLimitPolicy `json:"global,omitempty"`
+
+	// +optional
+	Admission *AdmissionControlPolicy `json:"admission,omitempty"`
+
 }
 
 // LocalRateLimitPolicy defines local rate limiting parameters.
@@ -539,6 +543,30 @@ type GlobalRateLimitPolicy struct {
 	// +required
 	// +kubebuilder:validation:MinItems=1
 	Descriptors []RateLimitDescriptor `json:"descriptors,omitempty"`
+}
+
+// AdmissionControlPolicy defines AC params
+type AdmissionControlPolicy struct {
+	// SamplingWindow is an integer number of seconds to sample
+	// +required
+	SamplingWindow uint32 `json:"samplingwindow"`
+
+	// SuccessThreshold is a percent (0-100) of the threshold below which to active throttling
+	// +kubebuilder:validation:Maximum=100
+	// +kubebuilder:validation:Minimum=1
+	// +required
+	SuccessThreshold uint32 `json:"successthreshold"`
+
+	// Aggression is the parameter that controls the shape of the throttling response
+	// +kubebuilder:validation:Minimum=0
+	// +required
+	Aggression uint32 `json:"aggression"`
+
+
+	//MinRps int64 `json:minrps`
+	//MaxRejectionProbability float64 `json:maxrejectionprobability`
+	//HTTPSuccessCriteria
+	//GRPCSuccessCriteria
 }
 
 // RateLimitDescriptor defines a list of key-value pair generators.

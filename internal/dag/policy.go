@@ -32,6 +32,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -519,10 +520,11 @@ func prefixReplacementsAreValid(replacements []contour_api_v1.ReplacePrefix) (st
 }
 
 func rateLimitPolicy(in *contour_api_v1.RateLimitPolicy) (*RateLimitPolicy, error) {
-	if in == nil || (in.Local == nil && in.Global == nil) {
+	if in == nil || (in.Local == nil && in.Global == nil && in.Admission == nil) {
 		return nil, nil
 	}
 
+	log.Info(fmt.Sprintf("RateLimitPolicy, policy.go|527, %#v", in) )
 	rp := &RateLimitPolicy{}
 
 	local, err := localRateLimitPolicy(in.Local)
@@ -537,7 +539,25 @@ func rateLimitPolicy(in *contour_api_v1.RateLimitPolicy) (*RateLimitPolicy, erro
 	}
 	rp.Global = global
 
+	admission, err := admissionRateLimitPolicy(in.Admission)
+	if err != nil {
+		return nil, err
+	}
+	rp.Admission = admission
+	log.Info(fmt.Sprintf("RateLimitPolicy, policy.go|547, %#v", admission) )
 	return rp, nil
+}
+
+func admissionRateLimitPolicy(in *contour_api_v1.AdmissionControlPolicy) (*AdmissionControlPolicy, error) {
+	if in == nil  { return nil, nil}
+
+	res := &AdmissionControlPolicy{
+		SamplingWindow: in.SamplingWindow,
+		SuccessThreshold: in.SuccessThreshold,
+		Aggression: in.Aggression,
+	}
+
+	return res, nil
 }
 
 func localRateLimitPolicy(in *contour_api_v1.LocalRateLimitPolicy) (*LocalRateLimitPolicy, error) {
