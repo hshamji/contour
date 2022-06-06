@@ -243,7 +243,7 @@ func OpenCensusFilter(host string) *http.HttpFilter {
 				&tracev3.OpenCensusConfig{
 					StdoutExporterEnabled:  false,
 					OcagentExporterEnabled: true,
-					OcagentAddress:         "agent-collector.otel-collector.svc:6831",
+					OcagentAddress:         "agent-collector.otel-collector.svc:55678",
 					IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
 						tracev3.OpenCensusConfig_B3,
 						tracev3.OpenCensusConfig_TRACE_CONTEXT,
