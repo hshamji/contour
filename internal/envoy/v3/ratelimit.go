@@ -17,6 +17,7 @@ import (
 	envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	ratelimit_config_v3 "github.com/envoyproxy/go-control-plane/envoy/config/ratelimit/v3"
 	envoy_route_v3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	tracev3 "github.com/envoyproxy/go-control-plane/envoy/config/trace/v3"
 	admission_control_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/admission_control/v3"
 	envoy_config_filter_http_local_ratelimit_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/local_ratelimit/v3"
 	ratelimit_filter_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ratelimit/v3"
@@ -191,11 +192,11 @@ func AdmissionControlFilter(config *dag.RateLimitPolicy) *http.HttpFilter {
 					SuccessCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria{
 						HttpCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria_HttpCriteria{
 							HttpSuccessStatus: []*envoy_types_v3.Int32Range{
-								&envoy_types_v3.Int32Range{
+								{
 									Start: 100,
 									End:   400,
 								},
-								&envoy_types_v3.Int32Range{
+								{
 									Start: 404,
 									End:   404,
 								},
@@ -226,6 +227,33 @@ func AdmissionControlFilter(config *dag.RateLimitPolicy) *http.HttpFilter {
 					RuntimeKey:   "admission_control.max_rejection_probability",
 				},
 			}),
+		},
+	}
+}
+
+func OpenCensusFilter(host string) *http.HttpFilter {
+
+	if host != "hsh-ac-test.dev-ml-platform.etsycloud.com" {
+		return nil
+	}
+	return &http.HttpFilter{
+		Name: "envoy.tracers.opencensus",
+		ConfigType: &http.HttpFilter_TypedConfig{
+			TypedConfig: protobuf.MustMarshalAny(
+				&tracev3.OpenCensusConfig{
+					StdoutExporterEnabled:  false,
+					OcagentExporterEnabled: true,
+					OcagentAddress:         "agent-collector.otel-collector.svc:6831",
+					IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
+						tracev3.OpenCensusConfig_B3,
+						tracev3.OpenCensusConfig_TRACE_CONTEXT,
+						tracev3.OpenCensusConfig_GRPC_TRACE_BIN,
+					},
+					OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
+						tracev3.OpenCensusConfig_TRACE_CONTEXT,
+						tracev3.OpenCensusConfig_B3,
+					},
+				}),
 		},
 	}
 }
