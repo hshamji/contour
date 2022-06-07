@@ -400,8 +400,7 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 func (b *httpConnectionManagerBuilder) AddOpenCensus(host string) *httpConnectionManagerBuilder {
 	if host == "hsh-ac-test.dev-ml-platform.etsycloud.com" {
 		b.Tracing = true
-	}
-	else {
+	} else {
 		b.Tracing = false
 	}
 	return b
@@ -461,7 +460,7 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 		DelayedCloseTimeout: envoy.Timeout(b.delayedCloseTimeout),
 	}
 
-	if b.tracing {
+	if b.Tracing {
 		cm.Tracing = &http.HttpConnectionManager_Tracing{
 			ClientSampling:   nil,
 			RandomSampling:   nil,

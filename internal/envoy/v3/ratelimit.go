@@ -33,6 +33,8 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"k8s.io/apimachinery/pkg/types"
+	log "github.com/sirupsen/logrus"
+
 )
 
 // LocalRateLimitConfig returns a config for the HTTP local rate
