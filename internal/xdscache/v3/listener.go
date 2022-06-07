@@ -486,7 +486,7 @@ func (c *ListenerCache) OnChange(root *dag.DAG) {
 					NumTrustedHops(cfg.XffNumTrustedHops).
 					AddFilter(envoy_v3.GlobalRateLimitFilter(envoyGlobalRateLimitConfig(cfg.RateLimitConfig))).
 					AddFilter(envoy_v3.AdmissionControlFilter(vh.RateLimitPolicy)).
-					AddFilter(envoy_v3.OpenCensusFilter(vh.Name)).
+					AddOpenCensus(vh.Name).
 					Get()
 
 				filters = envoy_v3.Filters(cm)
@@ -553,7 +553,7 @@ func (c *ListenerCache) OnChange(root *dag.DAG) {
 					NumTrustedHops(cfg.XffNumTrustedHops).
 					AddFilter(envoy_v3.GlobalRateLimitFilter(envoyGlobalRateLimitConfig(cfg.RateLimitConfig))).
 					AddFilter(envoy_v3.AdmissionControlFilter(vh.RateLimitPolicy)).
-					AddFilter(envoy_v3.OpenCensusFilter(vh.Name)).
+					AddOpenCensus(vh.Name).
 					Get()
 
 				// Default filter chain
