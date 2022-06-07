@@ -236,14 +236,16 @@ func OpenCensusFilter(host string) *http.HttpFilter {
 	if host != "hsh-ac-test.dev-ml-platform.etsycloud.com" {
 		return nil
 	}
+	log.Info("Adding OpenCensus configuration...")
+
 	return &http.HttpFilter{
-		Name: "envoy.tracers.opencensus",
+		Name: "envoy.tracersz.opencensus",
 		ConfigType: &http.HttpFilter_TypedConfig{
 			TypedConfig: protobuf.MustMarshalAny(
 				&tracev3.OpenCensusConfig{
 					StdoutExporterEnabled:  false,
 					OcagentExporterEnabled: true,
-					OcagentAddress:         "agent-collector.otel-collector.svc:6831",
+					OcagentAddress:         "agent-collector.otel-collector.svc:55678",
 					IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
 						tracev3.OpenCensusConfig_B3,
 						tracev3.OpenCensusConfig_TRACE_CONTEXT,
