@@ -32,7 +32,6 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -524,7 +523,6 @@ func rateLimitPolicy(in *contour_api_v1.RateLimitPolicy) (*RateLimitPolicy, erro
 		return nil, nil
 	}
 
-	log.Info(fmt.Sprintf("RateLimitPolicy, policy.go|527, %#v", in) )
 	rp := &RateLimitPolicy{}
 
 	local, err := localRateLimitPolicy(in.Local)
