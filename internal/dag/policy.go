@@ -542,17 +542,18 @@ func rateLimitPolicy(in *contour_api_v1.RateLimitPolicy) (*RateLimitPolicy, erro
 		return nil, err
 	}
 	rp.Admission = admission
-	log.Info(fmt.Sprintf("RateLimitPolicy, policy.go|547, %#v", admission) )
 	return rp, nil
 }
 
 func admissionRateLimitPolicy(in *contour_api_v1.AdmissionControlPolicy) (*AdmissionControlPolicy, error) {
-	if in == nil  { return nil, nil}
+	if in == nil {
+		return nil, nil
+	}
 
 	res := &AdmissionControlPolicy{
-		SamplingWindow: in.SamplingWindow,
+		SamplingWindow:   in.SamplingWindow,
 		SuccessThreshold: in.SuccessThreshold,
-		Aggression: in.Aggression,
+		Aggression:       in.Aggression,
 	}
 
 	return res, nil
