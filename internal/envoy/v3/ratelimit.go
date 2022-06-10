@@ -202,7 +202,7 @@ func AdmissionControlFilter(config *dag.RateLimitPolicy) *http.HttpFilter {
 							},
 						},
 						GrpcCriteria: &admission_control_v3.AdmissionControl_SuccessCriteria_GrpcCriteria{
-							GrpcSuccessStatus: []uint32{0, 1}},
+							GrpcSuccessStatus: []uint32{0}},
 					},
 				},
 				SamplingWindow: &durationpb.Duration{
