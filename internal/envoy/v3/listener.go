@@ -16,6 +16,8 @@ package v3
 import (
 	"errors"
 	"fmt"
+	tracev3 "github.com/envoyproxy/go-control-plane/envoy/config/trace/v3"
+
 	"sort"
 	"strings"
 	"time"
@@ -50,10 +52,10 @@ import (
 type HTTPVersionType = http.HttpConnectionManager_CodecType
 
 const (
-	HTTPVersionAuto HTTPVersionType = http.HttpConnectionManager_AUTO
-	HTTPVersion1    HTTPVersionType = http.HttpConnectionManager_HTTP1
-	HTTPVersion2    HTTPVersionType = http.HttpConnectionManager_HTTP2
-	HTTPVersion3    HTTPVersionType = http.HttpConnectionManager_HTTP3
+	HTTPVersionAuto = http.HttpConnectionManager_AUTO
+	HTTPVersion1    = http.HttpConnectionManager_HTTP1
+	HTTPVersion2    = http.HttpConnectionManager_HTTP2
+	HTTPVersion3    = http.HttpConnectionManager_HTTP3
 )
 
 // ProtoNamesForVersions returns the slice of ALPN protocol names for the give HTTP versions.
@@ -159,6 +161,7 @@ type httpConnectionManagerBuilder struct {
 	allowChunkedLength            bool
 	mergeSlashes                  bool
 	numTrustedHops                uint32
+	Tracing                       bool
 }
 
 // RouteConfigName sets the name of the RDS element that contains
@@ -394,6 +397,15 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 	return nil
 }
 
+func (b *httpConnectionManagerBuilder) AddOpenCensus(host string) *httpConnectionManagerBuilder {
+	if host == "hsh-ac-test.dev-ml-platform.etsycloud.com" {
+		b.Tracing = true
+	} else {
+		b.Tracing = false
+	}
+	return b
+}
+
 // Get returns a new http.HttpConnectionManager filter, constructed
 // from the builder settings.
 //
@@ -446,6 +458,37 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 		StreamIdleTimeout:   envoy.Timeout(b.streamIdleTimeout),
 		DrainTimeout:        envoy.Timeout(b.connectionShutdownGracePeriod),
 		DelayedCloseTimeout: envoy.Timeout(b.delayedCloseTimeout),
+	}
+
+	if b.Tracing {
+		cm.Tracing = &http.HttpConnectionManager_Tracing{
+			ClientSampling:   nil,
+			RandomSampling:   nil,
+			OverallSampling:  nil,
+			Verbose:          false,
+			MaxPathTagLength: nil,
+			CustomTags:       nil,
+			Provider: &tracev3.Tracing_Http{
+				Name: "envoy.tracers.opencensus",
+				ConfigType: &tracev3.Tracing_Http_TypedConfig{
+					TypedConfig: protobuf.MustMarshalAny(
+						&tracev3.OpenCensusConfig{
+							StdoutExporterEnabled:  false,
+							OcagentExporterEnabled: true,
+							OcagentAddress:         "agent-collector.otel-collector.svc:6831",
+							IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
+								tracev3.OpenCensusConfig_B3,
+								tracev3.OpenCensusConfig_TRACE_CONTEXT,
+								tracev3.OpenCensusConfig_GRPC_TRACE_BIN,
+							},
+							OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
+								tracev3.OpenCensusConfig_TRACE_CONTEXT,
+								tracev3.OpenCensusConfig_B3,
+							},
+						}),
+				},
+			},
+		}
 	}
 
 	// Max connection duration is infinite/disabled by default in Envoy, so if the timeout setting
