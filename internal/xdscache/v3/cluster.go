@@ -14,6 +14,7 @@
 package v3
 
 import (
+	v1 "k8s.io/api/core/v1"
 	"sort"
 	"sync"
 
@@ -98,6 +99,27 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
 
 	jaegerCluster.ClusterDiscoveryType = envoy_v3.ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
+	jaegerCluster.LoadAssignment = envoy_v3.StaticClusterLoadAssignment(&dag.Service{
+		Weighted:           dag.WeightedService{
+			Weight:           100,
+			ServiceName:      "gateway-collector",
+			ServiceNamespace: "otel-gateway",
+			ServicePort:      v1.ServicePort{
+				//Name:        "",
+				//Protocol:    "",
+				//AppProtocol: nil,
+				Port:        4317,
+				//TargetPort:  intstr.IntOrString{},
+				//NodePort:    0,
+			},
+		},
+		Protocol:           "",
+		MaxConnections:     0,
+		MaxPendingRequests: 0,
+		MaxRequests:        0,
+		MaxRetries:         0,
+		ExternalName:       "",
+	})
 	//cluster.EdsClusterConfig = &envoy_cluster_v3.Cluster_EdsClusterConfig{
 	//	EdsConfig:   ConfigSource("contour"),
 	//	ServiceName: ext.Upstream.ClusterName,
