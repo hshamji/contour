@@ -397,7 +397,7 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 	return nil
 }
 
-func (b *httpConnectionManagerBuilder) AddOpenCensus(host string) *httpConnectionManagerBuilder {
+func (b *httpConnectionManagerBuilder) AddTracing(host string) *httpConnectionManagerBuilder {
 	if host == "hsh-ac-test.dev-ml-platform.etsycloud.com" {
 		b.Tracing = true
 	} else {
