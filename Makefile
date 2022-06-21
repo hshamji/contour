@@ -139,6 +139,26 @@ container: ## Build the Contour container image
 		$(DOCKER_BUILD_LABELS) \
 		$(shell pwd) \
 		--tag $(IMAGE):$(VERSION)
+	kind load docker-image $(IMAGE):$(VERSION) --name contour
+	kubectl delete -f /home/hshamji/contour/examples/contour/ || true ## will fail on delete of job that has completed
+	sleep 5
+# Replace YAML image with the newly generated one ..
+	git checkout 28ddd28e /home/hshamji/contour/examples/contour/03-contour.yaml
+	sed -i "s/contour:v1.21.0/contour:$(VERSION)/g" /home/hshamji/contour/examples/contour/03-contour.yaml
+	kubectl apply -f /home/hshamji/contour/examples/contour/
+	sleep 2
+	kubectl apply -f /home/hshamji/contour/examples/example-workload/httpproxy/03-routes/httpproxy-multiple-paths.yaml
+	sleep 10
+	@./hack/get_logs.sh
+
+logs:
+	@./hack/get_logs.sh
+
+pf:
+	@./hack/pf.sh
+
+gl:
+	@curl 127.0.0.1:9001/config_dump > /home/hshamji/contour/config_dump.yaml
 
 push: ## Push the Contour container image to the Docker registry
 push: container
