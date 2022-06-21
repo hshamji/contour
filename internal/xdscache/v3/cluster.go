@@ -92,5 +92,18 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 		}
 	}
 
+	//Add the cluster for zipkin here:
+	jaegerCluster := envoy_v3.ClusterDefaults()
+	jaegerCluster.Name = "jaeger"
+	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
+
+	jaegerCluster.ClusterDiscoveryType = envoy_v3.ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
+	//cluster.EdsClusterConfig = &envoy_cluster_v3.Cluster_EdsClusterConfig{
+	//	EdsConfig:   ConfigSource("contour"),
+	//	ServiceName: ext.Upstream.ClusterName,
+	//}
+
+	//clusters["jaeger"] = jaegerCluster
+
 	c.Update(clusters)
 }

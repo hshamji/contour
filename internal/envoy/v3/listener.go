@@ -16,11 +16,11 @@ package v3
 import (
 	"errors"
 	"fmt"
-	tracev3 "github.com/envoyproxy/go-control-plane/envoy/config/trace/v3"
-
 	"sort"
 	"strings"
 	"time"
+
+	tracev3 "github.com/envoyproxy/go-control-plane/envoy/config/trace/v3"
 
 	accesslog "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
 	envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -52,10 +52,10 @@ import (
 type HTTPVersionType = http.HttpConnectionManager_CodecType
 
 const (
-	HTTPVersionAuto = http.HttpConnectionManager_AUTO
-	HTTPVersion1    = http.HttpConnectionManager_HTTP1
-	HTTPVersion2    = http.HttpConnectionManager_HTTP2
-	HTTPVersion3    = http.HttpConnectionManager_HTTP3
+	HTTPVersionAuto HTTPVersionType = http.HttpConnectionManager_AUTO
+	HTTPVersion1    HTTPVersionType = http.HttpConnectionManager_HTTP1
+	HTTPVersion2    HTTPVersionType = http.HttpConnectionManager_HTTP2
+	HTTPVersion3    HTTPVersionType = http.HttpConnectionManager_HTTP3
 )
 
 // ProtoNamesForVersions returns the slice of ALPN protocol names for the give HTTP versions.
@@ -469,22 +469,16 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 			MaxPathTagLength: nil,
 			CustomTags:       nil,
 			Provider: &tracev3.Tracing_Http{
-				Name: "envoy.tracers.opencensus",
+				Name: "envoy.tracers.zipkin",
 				ConfigType: &tracev3.Tracing_Http_TypedConfig{
 					TypedConfig: protobuf.MustMarshalAny(
-						&tracev3.OpenCensusConfig{
-							StdoutExporterEnabled:  false,
-							OcagentExporterEnabled: true,
-							OcagentAddress:         "agent-collector.otel-collector.svc:6831",
-							IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
-								tracev3.OpenCensusConfig_B3,
-								tracev3.OpenCensusConfig_TRACE_CONTEXT,
-								tracev3.OpenCensusConfig_GRPC_TRACE_BIN,
-							},
-							OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{
-								tracev3.OpenCensusConfig_TRACE_CONTEXT,
-								tracev3.OpenCensusConfig_B3,
-							},
+						&tracev3.ZipkinConfig{
+							CollectorCluster:         "jaeger",
+							CollectorEndpoint:        "/",
+							//TraceId_128Bit:           false,
+							//SharedSpanContext:        nil,
+							//CollectorEndpointVersion: 0,
+							//CollectorHostname:        "",
 						}),
 				},
 			},

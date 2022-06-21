@@ -559,7 +559,7 @@ func TestCluster(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := Cluster(tc.cluster)
-			want := clusterDefaults()
+			want := ClusterDefaults()
 
 			proto.Merge(want, tc.want)
 
