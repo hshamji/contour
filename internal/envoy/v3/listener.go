@@ -477,12 +477,16 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 							CollectorEndpoint:        "/",
 							//TraceId_128Bit:           false,
 							//SharedSpanContext:        nil,
-							//CollectorEndpointVersion: 0,
+							CollectorEndpointVersion: tracev3.ZipkinConfig_HTTP_JSON,
 							//CollectorHostname:        "",
 						}),
 				},
 			},
 		}
+	}
+
+	if b.Tracing {
+		cm.GenerateRequestId = protobuf.Bool(true)
 	}
 
 	// Max connection duration is infinite/disabled by default in Envoy, so if the timeout setting

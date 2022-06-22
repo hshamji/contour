@@ -1,3 +1,7 @@
+export GOPATH=/home/hshamji/work
+export PATH=/home/hshamji/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/local/go/bin:/bin
+export PATH=$PATH:/usr/local/go/bin:/bin
+
 git config --global user.name "Hassan Shamji"
 git config --global user.email "hshamji@etsy"
 alias gl="git log -n 10 --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
@@ -43,3 +47,5 @@ alias kdi="kubectl delete ingress"
 alias kds="kubectl delete svc"
 
 git config --global core.pager cat 
+git config core.filemode false
+

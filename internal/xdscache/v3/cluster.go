@@ -103,7 +103,7 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 		Weighted:           dag.WeightedService{
 			Weight:           100,
 			ServiceName:      "gateway-collector",
-			ServiceNamespace: "otel-gateway",
+			ServiceNamespace: "otel-collector",
 			ServicePort:      v1.ServicePort{
 				//Name:        "",
 				//Protocol:    "",
@@ -118,14 +118,14 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 		MaxPendingRequests: 0,
 		MaxRequests:        0,
 		MaxRetries:         0,
-		ExternalName:       "",
+		ExternalName:       "jaeger",
 	})
 	//cluster.EdsClusterConfig = &envoy_cluster_v3.Cluster_EdsClusterConfig{
 	//	EdsConfig:   ConfigSource("contour"),
 	//	ServiceName: ext.Upstream.ClusterName,
 	//}
 
-	//clusters["jaeger"] = jaegerCluster
+	clusters["jaeger"] = jaegerCluster
 
 	c.Update(clusters)
 }
