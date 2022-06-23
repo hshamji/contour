@@ -14,7 +14,8 @@
 package v3
 
 import (
-	v1 "k8s.io/api/core/v1"
+	envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	envoy_endpoint_v3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"sort"
 	"sync"
 
@@ -99,27 +100,60 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
 
 	jaegerCluster.ClusterDiscoveryType = envoy_v3.ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
-	jaegerCluster.LoadAssignment = envoy_v3.StaticClusterLoadAssignment(&dag.Service{
-		Weighted:           dag.WeightedService{
-			Weight:           100,
-			ServiceName:      "gateway-collector",
-			ServiceNamespace: "otel-collector",
-			ServicePort:      v1.ServicePort{
-				//Name:        "",
-				//Protocol:    "",
-				//AppProtocol: nil,
-				Port:        4317,
-				//TargetPort:  intstr.IntOrString{},
-				//NodePort:    0,
+	//jaegerCluster.LoadAssignment = envoy_v3.StaticClusterLoadAssignment(&dag.Service{
+	//	Weighted:           dag.WeightedService{
+	//		Weight:           100,
+	//		ServiceName:      "jaeger",
+	//		ServiceNamespace: "otel-collector",
+	//		ServicePort:      v1.ServicePort{
+	//			//Name:        "",
+	//			//Protocol:    "",
+	//			//AppProtocol: nil,
+	//			Port:        9411,
+	//			//TargetPort:  intstr.IntOrString{},
+	//			//NodePort:    0,
+	//		},
+	//	},
+	//	Protocol:           "",
+	//	MaxConnections:     0,
+	//	MaxPendingRequests: 0,
+	//	MaxRequests:        0,
+	//	MaxRetries:         0,
+	//	ExternalName:       "gateway-collector.otel-collector.svc",
+	//})
+
+	jaegerEndpoint := make([]*envoy_endpoint_v3.LbEndpoint, 0, 1)
+
+	jaegerEndpoint = append(jaegerEndpoint,
+		&envoy_endpoint_v3.LbEndpoint{
+			HostIdentifier: &envoy_endpoint_v3.LbEndpoint_Endpoint{
+				Endpoint: &envoy_endpoint_v3.Endpoint{
+					Address: &envoy_core_v3.Address{
+						Address: &envoy_core_v3.Address_SocketAddress{
+							SocketAddress: &envoy_core_v3.SocketAddress{
+								Protocol:   envoy_core_v3.SocketAddress_TCP,
+								Address:    "gateway-collector.otel-collector.svc",
+								Ipv4Compat: true,
+								PortSpecifier: &envoy_core_v3.SocketAddress_PortValue{
+									PortValue: uint32(9411),
+								},
+							},
+						},
+					},
+				},
 			},
 		},
-		Protocol:           "",
-		MaxConnections:     0,
-		MaxPendingRequests: 0,
-		MaxRequests:        0,
-		MaxRetries:         0,
-		ExternalName:       "jaeger",
-	})
+	)
+
+	jaegerCluster.LoadAssignment = &envoy_endpoint_v3.ClusterLoadAssignment{
+		ClusterName:    "jaeger",
+		Endpoints:      []*envoy_endpoint_v3.LocalityLbEndpoints{{
+			LbEndpoints: jaegerEndpoint,
+		}},
+		//NamedEndpoints: nil,
+		//Policy:         nil,
+	}
+
 	//cluster.EdsClusterConfig = &envoy_cluster_v3.Cluster_EdsClusterConfig{
 	//	EdsConfig:   ConfigSource("contour"),
 	//	ServiceName: ext.Upstream.ClusterName,
