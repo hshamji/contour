@@ -398,11 +398,7 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 }
 
 func (b *httpConnectionManagerBuilder) AddTracing(host string) *httpConnectionManagerBuilder {
-	if host == "hsh-ac-test.dev-ml-platform.etsycloud.com" {
-		b.Tracing = true
-	} else {
-		b.Tracing = false
-	}
+        b.Tracing = true
 	return b
 }
 
@@ -483,9 +479,6 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 				},
 			},
 		}
-	}
-
-	if b.Tracing {
 		cm.GenerateRequestId = protobuf.Bool(true)
 	}
 

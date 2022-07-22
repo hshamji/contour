@@ -94,33 +94,11 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 		}
 	}
 
-	//Add the cluster for zipkin here:
 	jaegerCluster := envoy_v3.ClusterDefaults()
 	jaegerCluster.Name = "jaeger"
 	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
 
 	jaegerCluster.ClusterDiscoveryType = envoy_v3.ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
-	//jaegerCluster.LoadAssignment = envoy_v3.StaticClusterLoadAssignment(&dag.Service{
-	//	Weighted:           dag.WeightedService{
-	//		Weight:           100,
-	//		ServiceName:      "jaeger",
-	//		ServiceNamespace: "otel-collector",
-	//		ServicePort:      v1.ServicePort{
-	//			//Name:        "",
-	//			//Protocol:    "",
-	//			//AppProtocol: nil,
-	//			Port:        9411,
-	//			//TargetPort:  intstr.IntOrString{},
-	//			//NodePort:    0,
-	//		},
-	//	},
-	//	Protocol:           "",
-	//	MaxConnections:     0,
-	//	MaxPendingRequests: 0,
-	//	MaxRequests:        0,
-	//	MaxRetries:         0,
-	//	ExternalName:       "gateway-collector.otel-collector.svc",
-	//})
 
 	jaegerEndpoint := make([]*envoy_endpoint_v3.LbEndpoint, 0, 1)
 
@@ -150,14 +128,7 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 		Endpoints:      []*envoy_endpoint_v3.LocalityLbEndpoints{{
 			LbEndpoints: jaegerEndpoint,
 		}},
-		//NamedEndpoints: nil,
-		//Policy:         nil,
 	}
-
-	//cluster.EdsClusterConfig = &envoy_cluster_v3.Cluster_EdsClusterConfig{
-	//	EdsConfig:   ConfigSource("contour"),
-	//	ServiceName: ext.Upstream.ClusterName,
-	//}
 
 	clusters["jaeger"] = jaegerCluster
 
