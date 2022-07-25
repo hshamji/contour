@@ -465,16 +465,15 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 			MaxPathTagLength: nil,
 			CustomTags:       nil,
 			Provider: &tracev3.Tracing_Http{
-				Name: "envoy.tracers.zipkin",
+				Name: "envoy.tracers.opencensus",
 				ConfigType: &tracev3.Tracing_Http_TypedConfig{
 					TypedConfig: protobuf.MustMarshalAny(
-						&tracev3.ZipkinConfig{
-							CollectorCluster:         "jaeger",
-							CollectorEndpoint:        "/",
-							//TraceId_128Bit:           false,
-							//SharedSpanContext:        nil,
-							CollectorEndpointVersion: tracev3.ZipkinConfig_HTTP_JSON,
-							//CollectorHostname:        "",
+						&tracev3.OpenCensusConfig{
+							StdoutExporterEnabled:   false,
+							OcagentExporterEnabled:  true,
+							OcagentAddress:          "localhost:55678",
+							IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
+							OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
 						}),
 				},
 			},
