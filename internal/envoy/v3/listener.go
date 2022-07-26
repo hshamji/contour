@@ -469,9 +469,9 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 				ConfigType: &tracev3.Tracing_Http_TypedConfig{
 					TypedConfig: protobuf.MustMarshalAny(
 						&tracev3.OpenCensusConfig{
-							StdoutExporterEnabled:   false,
+							StdoutExporterEnabled:   true,
 							OcagentExporterEnabled:  true,
-							OcagentAddress:          "localhost:55678",
+							OcagentAddress:          "agent-collector.otel-collector.svc:55678",
 							IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
 							OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
 						}),
