@@ -454,10 +454,8 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 		StreamIdleTimeout:   envoy.Timeout(b.streamIdleTimeout),
 		DrainTimeout:        envoy.Timeout(b.connectionShutdownGracePeriod),
 		DelayedCloseTimeout: envoy.Timeout(b.delayedCloseTimeout),
-	}
 
-	if b.Tracing {
-		cm.Tracing = &http.HttpConnectionManager_Tracing{
+		Tracing: &http.HttpConnectionManager_Tracing{
 			ClientSampling:   nil,
 			RandomSampling:   nil,
 			OverallSampling:  nil,
@@ -471,14 +469,20 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 						&tracev3.OpenCensusConfig{
 							StdoutExporterEnabled:   true,
 							OcagentExporterEnabled:  true,
-							OcagentAddress:          "agent-collector.otel-collector.svc:55678",
+							OcagentGrpcService:     &envoy_core_v3.GrpcService{
+											TargetSpecifier: &envoy_core_v3.GrpcService_EnvoyGrpc_{
+												EnvoyGrpc: &envoy_core_v3.GrpcService_EnvoyGrpc{
+													ClusterName: "jaeger",
+												},
+											},
+										},
 							IncomingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
 							OutgoingTraceContext: []tracev3.OpenCensusConfig_TraceContext{tracev3.OpenCensusConfig_CLOUD_TRACE_CONTEXT},
 						}),
 				},
 			},
-		}
-		cm.GenerateRequestId = protobuf.Bool(true)
+		},
+		GenerateRequestId: protobuf.Bool(true),
 	}
 
 	// Max connection duration is infinite/disabled by default in Envoy, so if the timeout setting

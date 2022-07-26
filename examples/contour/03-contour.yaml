@@ -45,7 +45,7 @@ spec:
         - --contour-key-file=/certs/tls.key
         - --config-path=/config/contour.yaml
         command: ["contour"]
-        image: ghcr.io/projectcontour/contour:7d65dbb7
+        image: ghcr.io/projectcontour/contour:6862ac20
         imagePullPolicy: IfNotPresent
         name: contour
         ports:
