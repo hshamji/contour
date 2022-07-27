@@ -110,7 +110,7 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 						Address: &envoy_core_v3.Address_SocketAddress{
 							SocketAddress: &envoy_core_v3.SocketAddress{
 								Protocol:   envoy_core_v3.SocketAddress_TCP,
-								Address:    "gateway-collector.otel-collector.svc",
+								Address:    "agent-collector.otel-collector.svc",
 								Ipv4Compat: true,
 								PortSpecifier: &envoy_core_v3.SocketAddress_PortValue{
 									PortValue: uint32(9411),

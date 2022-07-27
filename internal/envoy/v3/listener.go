@@ -161,7 +161,6 @@ type httpConnectionManagerBuilder struct {
 	allowChunkedLength            bool
 	mergeSlashes                  bool
 	numTrustedHops                uint32
-	Tracing                       bool
 }
 
 // RouteConfigName sets the name of the RDS element that contains
@@ -397,11 +396,6 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 	return nil
 }
 
-func (b *httpConnectionManagerBuilder) AddTracing(host string) *httpConnectionManagerBuilder {
-        b.Tracing = true
-	return b
-}
-
 // Get returns a new http.HttpConnectionManager filter, constructed
 // from the builder settings.
 //
@@ -454,10 +448,8 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 		StreamIdleTimeout:   envoy.Timeout(b.streamIdleTimeout),
 		DrainTimeout:        envoy.Timeout(b.connectionShutdownGracePeriod),
 		DelayedCloseTimeout: envoy.Timeout(b.delayedCloseTimeout),
-	}
 
-	if b.Tracing {
-		cm.Tracing = &http.HttpConnectionManager_Tracing{
+		Tracing: &http.HttpConnectionManager_Tracing{
 			ClientSampling:   nil,
 			RandomSampling:   nil,
 			OverallSampling:  nil,
@@ -468,18 +460,18 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 				Name: "envoy.tracers.zipkin",
 				ConfigType: &tracev3.Tracing_Http_TypedConfig{
 					TypedConfig: protobuf.MustMarshalAny(
-						&tracev3.ZipkinConfig{
-							CollectorCluster:         "jaeger",
-							CollectorEndpoint:        "/",
-							//TraceId_128Bit:           false,
-							//SharedSpanContext:        nil,
-							CollectorEndpointVersion: tracev3.ZipkinConfig_HTTP_JSON,
-							//CollectorHostname:        "",
-						}),
+                                               &tracev3.ZipkinConfig{
+                                                       CollectorCluster:         "jaeger",
+                                                       CollectorEndpoint:        "/",
+                                                       //TraceId_128Bit:           false,
+                                                       //SharedSpanContext:        nil,
+                                                       CollectorEndpointVersion: tracev3.ZipkinConfig_HTTP_JSON,
+                                                       //CollectorHostname:        "",
+                                        }),
 				},
 			},
-		}
-		cm.GenerateRequestId = protobuf.Bool(true)
+		},
+		GenerateRequestId: protobuf.Bool(true),
 	}
 
 	// Max connection duration is infinite/disabled by default in Envoy, so if the timeout setting
