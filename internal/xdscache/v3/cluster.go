@@ -14,8 +14,6 @@
 package v3
 
 import (
-	envoy_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	envoy_endpoint_v3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"sort"
 	"sync"
 
@@ -93,44 +91,6 @@ func (c *ClusterCache) OnChange(root *dag.DAG) {
 			clusters[name] = envoy_v3.ExtensionCluster(ec)
 		}
 	}
-
-	jaegerCluster := envoy_v3.ClusterDefaults()
-	jaegerCluster.Name = "jaeger"
-	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
-
-	jaegerCluster.ClusterDiscoveryType = envoy_v3.ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
-
-	jaegerEndpoint := make([]*envoy_endpoint_v3.LbEndpoint, 0, 1)
-
-	jaegerEndpoint = append(jaegerEndpoint,
-		&envoy_endpoint_v3.LbEndpoint{
-			HostIdentifier: &envoy_endpoint_v3.LbEndpoint_Endpoint{
-				Endpoint: &envoy_endpoint_v3.Endpoint{
-					Address: &envoy_core_v3.Address{
-						Address: &envoy_core_v3.Address_SocketAddress{
-							SocketAddress: &envoy_core_v3.SocketAddress{
-								Protocol:   envoy_core_v3.SocketAddress_TCP,
-								Address:    "agent-collector.otel-collector.svc",
-								Ipv4Compat: true,
-								PortSpecifier: &envoy_core_v3.SocketAddress_PortValue{
-									PortValue: uint32(55678),
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	)
-
-	jaegerCluster.LoadAssignment = &envoy_endpoint_v3.ClusterLoadAssignment{
-		ClusterName:    "jaeger",
-		Endpoints:      []*envoy_endpoint_v3.LocalityLbEndpoints{{
-			LbEndpoints: jaegerEndpoint,
-		}},
-	}
-
-	clusters["jaeger"] = jaegerCluster
 
 	c.Update(clusters)
 }

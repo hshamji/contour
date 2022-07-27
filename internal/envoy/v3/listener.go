@@ -161,7 +161,6 @@ type httpConnectionManagerBuilder struct {
 	allowChunkedLength            bool
 	mergeSlashes                  bool
 	numTrustedHops                uint32
-	Tracing                       bool
 }
 
 // RouteConfigName sets the name of the RDS element that contains
@@ -397,11 +396,6 @@ func (b *httpConnectionManagerBuilder) Validate() error {
 	return nil
 }
 
-func (b *httpConnectionManagerBuilder) AddTracing(host string) *httpConnectionManagerBuilder {
-        b.Tracing = true
-	return b
-}
-
 // Get returns a new http.HttpConnectionManager filter, constructed
 // from the builder settings.
 //
@@ -466,13 +460,6 @@ func (b *httpConnectionManagerBuilder) Get() *envoy_listener_v3.Filter {
 				Name: "envoy.tracers.opencensus",
 				ConfigType: &tracev3.Tracing_Http_TypedConfig{
 					TypedConfig: protobuf.MustMarshalAny(
-//                                               &tracev3.ZipkinConfig{
-//                                                       CollectorCluster:         "jaeger",
-//                                                       CollectorEndpoint:        "/",
-//                                                       //TraceId_128Bit:           false,
-//                                                       //SharedSpanContext:        nil,
-//                                                       CollectorEndpointVersion: tracev3.ZipkinConfig_HTTP_JSON,
-//                                                       //CollectorHostname:        "",
 						&tracev3.OpenCensusConfig{
 							StdoutExporterEnabled:   true,
 							OcagentExporterEnabled:  true,
