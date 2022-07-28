@@ -14,8 +14,6 @@
 package v3
 
 import (
-	"fmt"
-	"github.com/sirupsen/logrus"
 	"net"
 	"strings"
 	"time"
@@ -34,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func ClusterDefaults() *envoy_cluster_v3.Cluster {
+func clusterDefaults() *envoy_cluster_v3.Cluster {
 	return &envoy_cluster_v3.Cluster{
 		ConnectTimeout: protobuf.Duration(2 * time.Second),
 		CommonLbConfig: ClusterCommonLBConfig(),
@@ -42,10 +40,51 @@ func ClusterDefaults() *envoy_cluster_v3.Cluster {
 	}
 }
 
+func JaegerCluster() *envoy_cluster_v3.Cluster {
+
+	jaegerCluster := clusterDefaults()
+	jaegerCluster.Name = "jaeger"
+	jaegerCluster.LbPolicy = envoy_cluster_v3.Cluster_ROUND_ROBIN
+
+	jaegerCluster.ClusterDiscoveryType = ClusterDiscoveryType(envoy_cluster_v3.Cluster_STRICT_DNS)
+
+	jaegerEndpoint := make([]*envoy_endpoint_v3.LbEndpoint, 0, 1)
+
+	jaegerEndpoint = append(jaegerEndpoint,
+		&envoy_endpoint_v3.LbEndpoint{
+			HostIdentifier: &envoy_endpoint_v3.LbEndpoint_Endpoint{
+				Endpoint: &envoy_endpoint_v3.Endpoint{
+					Address: &envoy_core_v3.Address{
+						Address: &envoy_core_v3.Address_SocketAddress{
+							SocketAddress: &envoy_core_v3.SocketAddress{
+								Protocol:   envoy_core_v3.SocketAddress_TCP,
+								Address:    "agent-collector.otel-collector.svc",
+								Ipv4Compat: true,
+								PortSpecifier: &envoy_core_v3.SocketAddress_PortValue{
+									PortValue: uint32(9411),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+
+	jaegerCluster.LoadAssignment = &envoy_endpoint_v3.ClusterLoadAssignment{
+		ClusterName:    "jaeger",
+		Endpoints:      []*envoy_endpoint_v3.LocalityLbEndpoints{{
+			LbEndpoints: jaegerEndpoint,
+		}},
+	}
+
+	return jaegerCluster
+}
+
 // Cluster creates new envoy_cluster_v3.Cluster from dag.Cluster.
 func Cluster(c *dag.Cluster) *envoy_cluster_v3.Cluster {
 	service := c.Upstream
-	cluster := ClusterDefaults()
+	cluster := clusterDefaults()
 
 	cluster.Name = envoy.Clustername(c)
 	cluster.AltStatName = envoy.AltStatName(service)
@@ -115,7 +154,7 @@ func Cluster(c *dag.Cluster) *envoy_cluster_v3.Cluster {
 
 // ExtensionCluster builds a envoy_cluster_v3.Cluster struct for the given extension service.
 func ExtensionCluster(ext *dag.ExtensionCluster) *envoy_cluster_v3.Cluster {
-	cluster := ClusterDefaults()
+	cluster := clusterDefaults()
 
 	// The Envoy cluster name has already been set.
 	cluster.Name = ext.Name
@@ -166,7 +205,6 @@ func ExtensionCluster(ext *dag.ExtensionCluster) *envoy_cluster_v3.Cluster {
 
 // StaticClusterLoadAssignment creates a *envoy_endpoint_v3.ClusterLoadAssignment pointing to the external DNS address of the service
 func StaticClusterLoadAssignment(service *dag.Service) *envoy_endpoint_v3.ClusterLoadAssignment {
-	logrus.Info(fmt.Sprintf("StaticClusterLoadAssignment: %#v", service))
 	addr := SocketAddress(service.ExternalName, int(service.Weighted.ServicePort.Port))
 	return &envoy_endpoint_v3.ClusterLoadAssignment{
 		Endpoints: Endpoints(addr),
